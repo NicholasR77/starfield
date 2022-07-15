@@ -16,12 +16,38 @@ import (
     "go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const defaultPort = "8080"
+const graphqlPort = "8080"
 
 func main() {
+	// MongoDB
+	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://localhost:27017"))
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+    err = client.Connect(ctx)
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    defer client.Disconnect(ctx)
+    
+    databases, err := client.ListDatabaseNames(ctx, bson.M{})
+
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    fmt.Println(databases)
+
+	// GraphQL
 	port := os.Getenv("PORT")
+
 	if port == "" {
-		port = defaultPort
+		port = graphqlPort
 	}
 
 	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &graph.Resolver{}}))
