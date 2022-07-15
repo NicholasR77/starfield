@@ -4,8 +4,8 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"starfield/graph"
-	"starfield/graph/generated"
+	"github.com/NicholasR77/starfield/graph"
+	"github.com/NicholasR77/starfield/graph/generated"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"

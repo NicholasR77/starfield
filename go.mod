@@ -1,4 +1,4 @@
-module starfield
+module github.com/NicholasR77/starfield
 
 go 1.18
 
