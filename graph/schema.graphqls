@@ -1,13 +1,7 @@
-type Module {
-  id: ID!
-  name: String!
-  description: String!
-}
-
 type Ship {
   id: ID!
   name: String!
-  modules: [Module!]!
+  description: String!
 }
 
 input NewShip {

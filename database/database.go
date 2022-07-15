@@ -37,15 +37,62 @@ func (db* DB) Save(input *model.NewShip) *model.Ship {
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	if error != nil {
+	res, err := collection.InsertOne(ctx, input)
+
+	if err != nil {
 		log.Fatal(err)
 	}
-
-	res, err := collection.InsertOne(ctx, input)
 	
 	return &model.Ship{
-		ID: res.InsertID.(primitive.ObjectID).Hex(),
+		ID: res.InsertID.(primitive.ObjectID).Hex(),  
 		Name: input.Name,
 		Description: input.Description,
 	}
+}
+
+funct (db * DB) FindByID(ID string) *model.Ship {
+	ObjectID, err := primitive.ObjectIDFromHex(ID)
+	
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	shipsCollection := db.client.Database("starfield").Collection("ships")
+
+	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	res := collection.FindOne (ctx, bson.M{ "_id": ObjectID })
+	ship := model.Ship{}
+	res.Decode(&ship)
+
+	return &ship
+}
+
+func (db *DB) All () []*model.Ship {
+	shipsCollection := db.client.Database("starfield").Collection("ships")
+
+	ctx, cancel = context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	cur, err := collection.Find(ctx, bson.D{})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var ships []*model.Ships
+
+	for cur.Next(ctx) {
+		var ship *model.Ship
+		err := cur.Decode(&ship)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		ships = append(ships, ship)
+	}
+
+	return ships
 }

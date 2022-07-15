@@ -2,19 +2,13 @@
 
 package model
 
-type Module struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-}
-
 type NewShip struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
 type Ship struct {
-	ID      string    `json:"id"`
-	Name    string    `json:"name"`
-	Modules []*Module `json:"modules"`
+	ID          string `json:"id" bson: "_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
 }

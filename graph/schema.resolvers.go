@@ -13,17 +13,7 @@ import (
 
 // CreateShip is the resolver for the createShip field.
 func (r *mutationResolver) CreateShip(ctx context.Context, input model.NewShip) (*model.Ship, error) {
-	shipsCollection := client.Database("starfield").Collection("ships")
-
-	ship := bson.D{{"name", "Ship 1"}, {"description", "A coop ship"}}
-
-	result, err := shipsCollection.InsertOne(context.TODO(), ship)
-
-	if err != nil {
-		panic(err)
-	}
-
-	return result
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Ships is the resolver for the ships field.
@@ -33,9 +23,7 @@ func (r *queryResolver) Ships(ctx context.Context) ([]*model.Ship, error) {
 
 // Ship is the resolver for the ship field.
 func (r *queryResolver) Ship(ctx context.Context, id string) (*model.Ship, error) {
-	collection := client.Database("starfield").Collection("ships")
-
-	return mockShip, nil
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.
