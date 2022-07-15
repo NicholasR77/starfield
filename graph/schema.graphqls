@@ -1,0 +1,29 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type Module {
+  id: ID!
+  name: String!
+  description: String!
+}
+
+type Ship {
+  id: ID!
+  name: String!
+  modules: [Module!]!
+}
+
+input NewShip {
+  name: String!
+  description: String!
+}
+
+type Query {
+  ships: [Ship!]!
+  ship(id: ID!): Ship!
+}
+
+type Mutation {
+  createShip(input: NewShip!): Ship!
+}
