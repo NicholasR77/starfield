@@ -13,12 +13,17 @@ import (
 
 // CreateShip is the resolver for the createShip field.
 func (r *mutationResolver) CreateShip(ctx context.Context, input *model.NewShip) (*model.Ship, error) {
-	return db.Save(input), nil
+	return db.CreateShip(input), nil
+}
+
+// AddModuleToShip is the resolver for the addModuleToShip field.
+func (r *mutationResolver) AddModuleToShip(ctx context.Context, shipID string, input *model.NewModule) (*model.Ship, error) {
+	return db.CreateModule(shipID, input), nil
 }
 
 // Ship is the resolver for the ship field.
-func (r *queryResolver) Ship(ctx context.Context, id string) (*model.Ship, error) {
-	return db.FindByID(id), nil
+func (r *queryResolver) Ship(ctx context.Context, shipID string) (*model.Ship, error) {
+	return db.FindByID(shipID), nil
 }
 
 // Ships is the resolver for the ships field.

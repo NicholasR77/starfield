@@ -33,7 +33,7 @@ func Connect() *DB {
 	}
 }
 
-func (db *DB) Save(input *model.NewShip) *model.Ship {
+func (db *DB) CreateShip(input *model.NewShip) *model.Ship {
 	collection := db.client.Database("starfield").Collection("ships")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -50,6 +50,36 @@ func (db *DB) Save(input *model.NewShip) *model.Ship {
 		Name:        input.Name,
 		Description: input.Description,
 	}
+}
+
+// TODO: Look into why ID is not being returned properly
+func (db *DB) CreateModule(ID string, input *model.NewModule) *model.Ship {
+	ObjectID, err := primitive.ObjectIDFromHex(ID)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	collection := db.client.Database("starfield").Collection("ships")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	filter := bson.M{"_id": ObjectID}
+	update := bson.M{"$push": bson.M{"modules": input}}
+	upsert := true
+	after := options.After
+	options := options.FindOneAndUpdateOptions{
+		ReturnDocument: &after,
+		Upsert:         &upsert,
+	}
+
+	res := collection.FindOneAndUpdate(ctx, filter, update, &options)
+
+	ship := model.Ship{}
+	res.Decode(&ship)
+
+	return &ship
 }
 
 func (db *DB) FindByID(ID string) *model.Ship {

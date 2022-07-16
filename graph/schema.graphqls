@@ -1,11 +1,17 @@
-type Ship {
-  _id: String!
+type Module {
   name: String!
   description: String!
 }
 
+type Ship {
+  _id: String!
+  name: String!
+  description: String!
+  modules: [Module!]
+}
+
 type Query {
-  ship(_id: String!): Ship!
+  ship(shipId: String!): Ship!
   ships: [Ship!]!
 }
 
@@ -14,6 +20,12 @@ input NewShip {
   description: String!
 }
 
+input NewModule {
+  name: String!
+  description: String!
+}
+
 type Mutation {
   createShip(input: NewShip): Ship!
+  addModuleToShip(shipId: String!, input: NewModule): Ship!
 }
