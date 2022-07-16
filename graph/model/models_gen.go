@@ -8,7 +8,7 @@ type NewShip struct {
 }
 
 type Ship struct {
-	ID          string `json:"id" bson: "_id"`
+	ID          string `json:"_id" bson:"_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }

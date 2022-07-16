@@ -1,7 +1,12 @@
 type Ship {
-  id: ID!
+  _id: String!
   name: String!
   description: String!
+}
+
+type Query {
+  ship(_id: String!): Ship!
+  ships: [Ship!]!
 }
 
 input NewShip {
@@ -9,11 +14,6 @@ input NewShip {
   description: String!
 }
 
-type Query {
-  ships: [Ship!]!
-  ship(id: ID!): Ship!
-}
-
 type Mutation {
-  createShip(input: NewShip!): Ship!
+  createShip(input: NewShip): Ship!
 }

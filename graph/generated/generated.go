@@ -45,7 +45,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		CreateShip func(childComplexity int, input model.NewShip) int
+		CreateShip func(childComplexity int, input *model.NewShip) int
 	}
 
 	Query struct {
@@ -61,11 +61,11 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	CreateShip(ctx context.Context, input model.NewShip) (*model.Ship, error)
+	CreateShip(ctx context.Context, input *model.NewShip) (*model.Ship, error)
 }
 type QueryResolver interface {
-	Ships(ctx context.Context) ([]*model.Ship, error)
 	Ship(ctx context.Context, id string) (*model.Ship, error)
+	Ships(ctx context.Context) ([]*model.Ship, error)
 }
 
 type executableSchema struct {
@@ -93,7 +93,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateShip(childComplexity, args["input"].(model.NewShip)), true
+		return e.complexity.Mutation.CreateShip(childComplexity, args["input"].(*model.NewShip)), true
 
 	case "Query.ship":
 		if e.complexity.Query.Ship == nil {
@@ -105,7 +105,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Ship(childComplexity, args["id"].(string)), true
+		return e.complexity.Query.Ship(childComplexity, args["_id"].(string)), true
 
 	case "Query.ships":
 		if e.complexity.Query.Ships == nil {
@@ -121,7 +121,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Ship.Description(childComplexity), true
 
-	case "Ship.id":
+	case "Ship._id":
 		if e.complexity.Ship.ID == nil {
 			break
 		}
@@ -205,9 +205,14 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 
 var sources = []*ast.Source{
 	{Name: "../schema.graphqls", Input: `type Ship {
-  id: ID!
+  _id: String!
   name: String!
   description: String!
+}
+
+type Query {
+  ship(_id: String!): Ship!
+  ships: [Ship!]!
 }
 
 input NewShip {
@@ -215,13 +220,8 @@ input NewShip {
   description: String!
 }
 
-type Query {
-  ships: [Ship!]!
-  ship(id: ID!): Ship!
-}
-
 type Mutation {
-  createShip(input: NewShip!): Ship!
+  createShip(input: NewShip): Ship!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -233,10 +233,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_createShip_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.NewShip
+	var arg0 *model.NewShip
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNNewShip2githubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐNewShip(ctx, tmp)
+		arg0, err = ec.unmarshalONewShip2ᚖgithubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐNewShip(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -264,14 +264,14 @@ func (ec *executionContext) field_Query_ship_args(ctx context.Context, rawArgs m
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	if tmp, ok := rawArgs["_id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("_id"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["id"] = arg0
+	args["_id"] = arg0
 	return args, nil
 }
 
@@ -327,7 +327,7 @@ func (ec *executionContext) _Mutation_createShip(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateShip(rctx, fc.Args["input"].(model.NewShip))
+		return ec.resolvers.Mutation().CreateShip(rctx, fc.Args["input"].(*model.NewShip))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -352,8 +352,8 @@ func (ec *executionContext) fieldContext_Mutation_createShip(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Ship_id(ctx, field)
+			case "_id":
+				return ec.fieldContext_Ship__id(ctx, field)
 			case "name":
 				return ec.fieldContext_Ship_name(ctx, field)
 			case "description":
@@ -370,6 +370,69 @@ func (ec *executionContext) fieldContext_Mutation_createShip(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createShip_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_ship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_ship(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Ship(rctx, fc.Args["_id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Ship)
+	fc.Result = res
+	return ec.marshalNShip2ᚖgithubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐShip(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_ship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "_id":
+				return ec.fieldContext_Ship__id(ctx, field)
+			case "name":
+				return ec.fieldContext_Ship_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Ship_description(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Ship", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_ship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -415,8 +478,8 @@ func (ec *executionContext) fieldContext_Query_ships(ctx context.Context, field 
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Ship_id(ctx, field)
+			case "_id":
+				return ec.fieldContext_Ship__id(ctx, field)
 			case "name":
 				return ec.fieldContext_Ship_name(ctx, field)
 			case "description":
@@ -424,69 +487,6 @@ func (ec *executionContext) fieldContext_Query_ships(ctx context.Context, field 
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Ship", field.Name)
 		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_ship(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_ship(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Ship(rctx, fc.Args["id"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Ship)
-	fc.Result = res
-	return ec.marshalNShip2ᚖgithubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐShip(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_ship(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Ship_id(ctx, field)
-			case "name":
-				return ec.fieldContext_Ship_name(ctx, field)
-			case "description":
-				return ec.fieldContext_Ship_description(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Ship", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_ship_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
 	}
 	return fc, nil
 }
@@ -620,8 +620,8 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Ship_id(ctx context.Context, field graphql.CollectedField, obj *model.Ship) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Ship_id(ctx, field)
+func (ec *executionContext) _Ship__id(ctx context.Context, field graphql.CollectedField, obj *model.Ship) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Ship__id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -648,17 +648,17 @@ func (ec *executionContext) _Ship_id(ctx context.Context, field graphql.Collecte
 	}
 	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Ship_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Ship__id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Ship",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2627,7 +2627,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
-		case "ships":
+		case "ship":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2636,7 +2636,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_ships(ctx, field)
+				res = ec._Query_ship(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2650,7 +2650,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
-		case "ship":
+		case "ships":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -2659,7 +2659,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_ship(ctx, field)
+				res = ec._Query_ships(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -2706,9 +2706,9 @@ func (ec *executionContext) _Ship(ctx context.Context, sel ast.SelectionSet, obj
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Ship")
-		case "id":
+		case "_id":
 
-			out.Values[i] = ec._Ship_id(ctx, field, obj)
+			out.Values[i] = ec._Ship__id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -3071,26 +3071,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
-func (ec *executionContext) unmarshalNNewShip2githubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐNewShip(ctx context.Context, v interface{}) (model.NewShip, error) {
-	res, err := ec.unmarshalInputNewShip(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalNShip2githubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐShip(ctx context.Context, sel ast.SelectionSet, v model.Ship) graphql.Marshaler {
 	return ec._Ship(ctx, sel, &v)
 }
@@ -3441,6 +3421,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	}
 	res := graphql.MarshalBoolean(*v)
 	return res
+}
+
+func (ec *executionContext) unmarshalONewShip2ᚖgithubᚗcomᚋNicholasR77ᚋstarfieldᚋgraphᚋmodelᚐNewShip(ctx context.Context, v interface{}) (*model.NewShip, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputNewShip(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
